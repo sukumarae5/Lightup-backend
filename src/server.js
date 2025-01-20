@@ -24,6 +24,11 @@ app.use('/api/orders', orderRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
+  if (err) {
+    console.error('Failed to start server:', err);
+  } else {
+    console.log(`Server is running on port http://localhost:${PORT}`);
+  }
   console.log(`Server running on http://localhost:${PORT}`);
 });
 
