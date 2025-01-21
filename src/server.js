@@ -16,6 +16,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
+app.use('/api/data', (req, res) => {
+  res.json({ message: 'This is your data endpoint.' });
+});
+
+
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes)

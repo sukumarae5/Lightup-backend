@@ -1,5 +1,15 @@
 {
-    "build": {
-      "commands": ["node server.js"]
-    }
+    "version": 3, 
+    "builds": [
+      {
+        "src": "**/*", 
+        "dest": "public" 
+      }
+    ],
+    "routes": [
+      {
+        "src": "/(.*)", 
+        "dest": "/index.html" 
+      }
+    ]
   }
