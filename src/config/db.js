@@ -1,16 +1,27 @@
 const mysql = require('mysql2');
-require('dotenv').config({path:"../.env"}); // Load environment variables from .env file
-  // Adjust the path as necessary
+require('dotenv').config('../.env');
 
-// Get the database connection details from .env file
+
+const fs = require('fs');
+
 const connection = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  host: process.env.DB_HOST,       // 'srv1402.hstgr.io'
+  user: process.env.DB_USER,       // 'u702853446_ecom_lightup'
+  password: process.env.DB_PASSWORD, // 'your_password'
+  database: process.env.DB_NAME,    // 'e_commercelightup_db'
+  port: process.env.DB_PORT ,
+  ssl: {
+    ca: fs.readFileSync(process.env.CA)
+  },  // Default MySQL port
 });
-console.log(process.env.DB_HOST)
-// Enable promise support
-const promiseConnection = connection.promise();
 
-module.exports = promiseConnection;
+// Test the connection
+connection.connect((err) => {
+  if (err) {
+    console.error('Error connecting to the database:', err.stack);
+    return;
+  }
+  console.log('Connected to the database!');
+});
+
+module.exports = connection;
