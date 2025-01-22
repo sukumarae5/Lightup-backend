@@ -5,7 +5,8 @@ dotenv.config({ path: '../.env' });
 const bodyParser = require('body-parser');
 const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
-const orderRoutes = require('./routes/orderRoutes')
+const orderRoutes = require('./routes/orderRoutes');
+const allusers = require('./models/User');
 
 const app = express();
 

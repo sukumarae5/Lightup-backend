@@ -1,4 +1,5 @@
 const userService = require('../services/userService');
+const connection = require('../config/db');
 
 exports.registerUser = async (req, res) => {
   const { name, email, password, phone_number, role } = req.body;
@@ -60,15 +61,22 @@ exports.loginUser = async (req, res) => {
   }
 };
 
+// userController.js
+// userController.js
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await userService.fetchAllUsers();
-    if (users.length === 0) {
+    // Execute the query and get the result
+    const [rows] = await connection.execute('SELECT * FROM users');
+    
+    if (rows.length === 0) {
       return res.status(404).json({ message: 'No users found.' });
     }
-    res.status(200).json({ users });
+
+    res.status(200).json({ users: rows });
   } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ error: 'Server error.' });
+    console.error('Error fetching users:', error); // Log the error
+    res.status(500).json({ error: error.message });
   }
 };
+
+

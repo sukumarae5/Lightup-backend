@@ -21,9 +21,13 @@ const findUserByEmailOrUsername = async (email, username, password) => {
 };
 
 const getAllUsers = async () => {
-  const query = 'SELECT * FROM users';
-  const [results] = await connection.execute(query);
-  return results;
+ connection.query('SELECT * FROM users',(err,result)=>{
+  if (err) {
+    console.error('Error running query:', err.message);
+    return res.status(500).send('Error fetching users');
+  }
+  res.json(result);
+ })
 };
 
 module.exports = {
