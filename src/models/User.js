@@ -6,6 +6,7 @@ const createUser = async (userData) => {
     VALUES (?, ?, ?, ?, ?)
   `;
   const values = [userData.name, userData.email, userData.password, userData.phone_number, userData.role];
+  console.log(values)
   const [results] = await connection.execute(query, values);
   return results.insertId;
 };
