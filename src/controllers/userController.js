@@ -1,82 +1,153 @@
-const userService = require('../services/userService');
-const connection = require('../config/db');
+const userService = require("../services/userService");
+const jwt = require("jsonwebtoken");
+const sendEmail = require("../services/emailServices");
 
 exports.registerUser = async (req, res) => {
   const { name, email, password, phone_number, role } = req.body;
 
   if (!name || !email || !password || !phone_number || !role) {
-    return res.status(400).json({ error: 'All fields (name, email, password, phone_number, role) are required.' });
-  }
-
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{5,}$/;
-  const phoneNumberRegex = /^\d{10}$/;
-  const validRoles = ['customer', 'admin'];
-
-  if (!passwordRegex.test(password)) {
-    return res.status(400).json({
-      error: 'Password must contain at least one uppercase letter, one lowercase letter, one number, one special character, and be at least 5 characters long.',
-    });
-  }
-
-  if (!phoneNumberRegex.test(phone_number)) {
-    return res.status(400).json({ error: 'Phone number must contain exactly 10 digits.' });
-  }
-
-  if (!validRoles.includes(role)) {
-    return res.status(400).json({ error: 'Role must be either "customer" or "admin".' });
+    return res.status(400).json({ error: "All fields are required." });
   }
 
   try {
+    // Register user in the database
     const userId = await userService.registerUser({ name, email, password, phone_number, role });
-    res.status(201).json({ message: 'User registered successfully.', userId });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: userId, email },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+
+    const subject = "Welcome to Our E-commerce Platform!";
+    const html = `<p>Hi ${name},</p>
+                  <p>Thank you for registering. Your role is: <strong>${role}</strong>.</p>
+                  <p>Enjoy shopping with us!</p>`;
+
+    // Send welcome email
+    await sendEmail(
+      email,
+      subject, 
+      html
+    );
+
+    res.status(201).json({
+      message: "User registered successfully.",
+      userId,
+      token,
+    });
   } catch (error) {
-    console.error('Error during registration:', error);
-    if (error.code === 'ER_DUP_ENTRY') {
-      return res.status(409).json({ error: 'Duplicate entry', message: 'The email or phone number already exists.' });
-    }
-    res.status(500).json({ error: 'Server error.' });
+    console.error("Registration error:", error);
+    res.status(500).json({ error: "Server error." });
   }
 };
 
+// 📌 User Login
 exports.loginUser = async (req, res) => {
   const { email, username, password } = req.body;
 
-  if (!password) {
-    return res.status(400).json({ message: 'Password is required.' });
-  }
-
   if (!email && !username) {
-    return res.status(400).json({ message: 'Either email or username is required.' });
+    return res.status(400).json({ message: "Either email or username is required." });
+  }
+  if (!password) {
+    return res.status(400).json({ message: "Password is required." });
   }
 
   try {
     const user = await userService.loginUser(email, username, password);
-    if (user.length === 0) {
-      return res.status(401).json({ message: 'Invalid credentials.' });
+
+    if (!user || user.length === 0) {
+      return res.status(401).json({ message: "Invalid credentials." });
     }
-    res.status(200).json({ message: 'Login successful', user: user[0] });
+
+    const token = jwt.sign(
+      { id: user[0].id, email: user[0].email },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+
+    res.status(200).json({ message: "Login successful", token });
   } catch (error) {
-    console.error('Error during login:', error);
-    res.status(500).json({ error: 'Server error.' });
+    console.error("Login error:", error);
+    res.status(500).json({ error: "Server error." });
   }
 };
 
-// userController.js
-// userController.js
+// 📌 Get All Users (Protected)
 exports.getAllUsers = async (req, res) => {
   try {
-    // Execute the query and get the result
-    const [rows] = await connection.execute('SELECT * FROM users');
-    
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'No users found.' });
+    const users = await userService.fetchAllUsers();
+    if (users.length === 0) {
+      return res.status(404).json({ message: "No users found." });
     }
-
-    res.status(200).json({ users: rows });
+    res.status(200).json({ users });
   } catch (error) {
-    console.error('Error fetching users:', error); // Log the error
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching users:", error);
+    res.status(500).json({ error: "Server error." });
   }
 };
 
+// 📌 Update User
+exports.updateUser = async (req, res) => {
+  const { id: userId } = req.params;
+  const { name, email, password, phone_number, role } = req.body;
 
+  if (!userId) {
+    return res.status(400).json({ error: "User ID is required." });
+  }
+
+  try {
+    const result = await userService.updateUser(userId, { name, email, password, phone_number, role });
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "User not found or no changes made." });
+    }
+
+    res.status(200).json({ message: "User updated successfully." });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ error: "Server error." });
+  }
+};
+
+// 📌 Delete User
+exports.deleteUser = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await userService.deleteUser(id);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    res.status(200).json({ message: "User deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ error: "Server error." });
+  }
+};
+
+// In userController.js
+
+// 📌 Get User by ID (Protected)
+exports.getUserById = async (req, res) => {
+  const { id: userId } = req.params; // Get the userId from the URL params
+
+  try {
+    const user = await userService.fetchUserById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Return the user data (excluding sensitive information like password)
+    const { password, ...userProfile } = user; // Remove the password from the response
+
+    res.status(200).json(userProfile);
+  } catch (error) {
+    console.error("Error fetching user by ID:", error);
+    res.status(500).json({ error: "Server error." });
+  }
+};

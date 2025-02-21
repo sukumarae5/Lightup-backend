@@ -1,14 +1,26 @@
-const productModel=require('../models/Product')
+const productModel = require('../models/Product');
 
-const registerProduct =async (productData) => {
-    return await productModel.createProduct(productData)
-}
+const registerProduct = async (productData) => {
+    return await productModel.createProduct(productData);
+};
 
-const fetchAllProducts =async () => {
+const fetchAllProducts = async () => {
     return await productModel.getAllProducts();
-}
+};
 
-module.exports={
+// **Update Product**
+const updateProduct = async (productId, productData) => {
+    return await productModel.updateProduct(productId, productData);
+};
+
+// **Delete Product**
+const deleteProduct = async (productId) => {
+    return await productModel.deleteProduct(productId);
+};
+
+module.exports = {
     registerProduct,
     fetchAllProducts,
-}
+    updateProduct,
+    deleteProduct,
+};
