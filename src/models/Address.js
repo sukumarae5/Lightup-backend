@@ -1,17 +1,36 @@
 const db = require("../config/db");
 
 const addAddress = async (addressData) => {
-  const { user_id, full_name, phone_number, street_address, city, state, postal_code, country } = addressData;
+  const {
+    user_id,
+    full_name,
+    phone_number,
+    street_address,
+    city,
+    state,
+    postal_code,
+    country,
+  } = addressData;
 
   // Ensure no undefined values
-  const values = [user_id, full_name, phone_number, street_address, city, state, postal_code, country];
+  const values = [
+    user_id,
+    full_name,
+    phone_number,
+    street_address,
+    city,
+    state,
+    postal_code,
+    country,
+  ];
 
   if (values.includes(undefined)) {
     throw new Error("Missing required address fields");
   }
 
   // Check if it's the first address to set it as default
-  const checkDefaultQuery = "SELECT COUNT(*) as count FROM addresses WHERE user_id = ?";
+  const checkDefaultQuery =
+    "SELECT COUNT(*) as count FROM addresses WHERE user_id = ?";
   const [rows] = await db.execute(checkDefaultQuery, [user_id]);
   const isDefault = rows[0].count === 0;
 
@@ -25,21 +44,24 @@ const addAddress = async (addressData) => {
 };
 
 const getAddressesByUserId = async (userId) => {
-  const query = "SELECT * FROM addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC";
+  const query =
+    "SELECT * FROM addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC";
   const [rows] = await db.execute(query, [userId]);
   return rows;
 };
 
-
 // Define the updateAddress function
-const updateAddress = async (addressId, addressData, userId) => {
+const updateAddress = async (id, addressData, userId) => {
   const query = `
       UPDATE addresses
       SET full_name = ?, phone_number = ?, street_address = ?, city = ?,
           state = ?, postal_code = ?, country = ?
       WHERE id = ? AND user_id = ?
   `;
-
+  const addressid = Number(id);
+  console.log(addressid); // Ensure id is an integer
+  const user_Id = Number(userId); // Ensure userId is an integer
+  console.log(user_Id);
   // Prepare the values for the query
   const values = [
     addressData.full_name ?? null,
@@ -49,18 +71,16 @@ const updateAddress = async (addressId, addressData, userId) => {
     addressData.state ?? null,
     addressData.postal_code ?? null,
     addressData.country ?? null,
-    addressId,
-    userId
+    addressid,
+    user_Id,
   ];
 
-  console.log("Executing SQL Query:", query);
   console.log("With Values:", values);
 
   // Execute the query and return the result
   const [result] = await db.execute(query, values);
   return result;
 };
-
 
 const deleteAddress = async (addressId) => {
   const query = "DELETE FROM addresses WHERE id = ?";
@@ -69,7 +89,10 @@ const deleteAddress = async (addressId) => {
 };
 
 const setDefaultAddress = async (userId, addressId) => {
-  await db.execute("UPDATE addresses SET is_default = FALSE WHERE user_id = ?", [userId]);
+  await db.execute(
+    "UPDATE addresses SET is_default = FALSE WHERE user_id = ?",
+    [userId]
+  );
   const query = "UPDATE addresses SET is_default = TRUE WHERE id = ?";
   const [result] = await db.execute(query, [addressId]);
   return result;
@@ -80,5 +103,5 @@ module.exports = {
   getAddressesByUserId,
   updateAddress,
   deleteAddress,
-  setDefaultAddress
+  setDefaultAddress,
 };

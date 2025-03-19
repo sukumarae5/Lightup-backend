@@ -7,7 +7,7 @@ const router = express.Router();
 // 🔒 Protected APIs (Requires Auth Token)
 router.post("/add", verifyToken, addressController.addAddress);
 router.get("/get", verifyToken, addressController.getAddressesByUser);
-router.put("/update/:addressId", verifyToken, addressController.updateAddress);
+router.put("/updateaddress/:id", verifyToken, addressController.updateAddress);
 
 router.delete("/delete/:addressId", verifyToken, addressController.deleteAddress);
 router.put("/set-default/:addressId", verifyToken, addressController.setDefaultAddress);

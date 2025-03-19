@@ -9,9 +9,9 @@ const fetchAddressesByUserId = async (userId) => {
 };
 
 
-const modifyAddress = async (addressId, addressData, userId) => {
+const modifyAddress = async (id, addressData, userId) => {
   // Now updateAddress is defined and can be called
-  return await addressModel.updateAddress(addressId, addressData, userId);
+  return await addressModel.updateAddress(id, addressData, userId);
 };
 
 const removeAddress = async (addressId) => {

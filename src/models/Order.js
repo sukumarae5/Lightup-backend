@@ -1,60 +1,45 @@
-const connection = require("../config/db");
+const db = require('../config/db');
 
-/**
- * ✅ Create an Order
- */
-const createOrder = async (userId, totalPrice, trackingNumber, courier, estimatedDeliveryDate) => {
-  const query = `
-    INSERT INTO orders (user_id, total_price, tracking_number, courier, estimated_delivery_date)
-    VALUES (?, ?, ?, ?, ?)
-  `;
-  const [result] = await connection.execute(query, [userId, totalPrice, trackingNumber, courier, estimatedDeliveryDate]);
+const createOrder = async (userId, totalPrice, status, addressId) => {
+  const query = 'INSERT INTO orders (user_id, total_price, status, address_id) VALUES (?, ?, ?, ?)';
+  const [result] = await db.execute(query, [userId, totalPrice, status, addressId]);
   return result.insertId;
 };
-
-/**
- * ✅ Get Order by ID
- */
-const getOrderById = async (orderId) => {
-  const query = "SELECT * FROM orders WHERE id = ?";
-  const [results] = await connection.execute(query, [orderId]);
-  return results.length > 0 ? results[0] : null;
+const createOrderItems = async (orderId, items) => {
+  // items is an array of objects with { product_id, quantity, price }
+  const query = 'INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ?';
+  const values = items.map(item => [orderId, item.product_id, item.quantity, item.price]);
+  const [result] = await db.query(query, [values]);
+  return result;
 };
 
-/**
- * ✅ Get Order Items by Order ID
- */
-const getOrderItemsByOrderId = async (orderId) => {
-  const query = "SELECT * FROM order_items WHERE order_id = ?";
-  const [results] = await connection.execute(query, [orderId]);
-  return results;
+const getOrdersByUser = async (userId) => {
+  const query = 'SELECT * FROM orders WHERE user_id = ?';
+  const [orders] = await db.execute(query, [userId]);
+  return orders;
+
 };
 
-/**
- * ✅ Update Order
- */
-const updateOrder = async (orderId, totalPrice, status, trackingNumber, courier, estimatedDeliveryDate) => {
-  const query = `
-    UPDATE orders
-    SET total_price = ?, status = ?, tracking_number = ?, courier = ?, estimated_delivery_date = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `;
-  const [result] = await connection.execute(query, [totalPrice, status, trackingNumber, courier, estimatedDeliveryDate, orderId]);
-  return result.affectedRows > 0;
+const getAllOrders = async () => {
+    try {
+        const [orders] = await db.execute("SELECT * FROM orders"); // Direct MySQL query
+        return orders;
+    } catch (error) {
+        throw new Error(error.message);
+    }
 };
 
-/**
- * ✅ Delete an Order
- */
-const deleteOrder = async (orderId) => {
-  // Delete related order items and tracking first to maintain referential integrity
-  await connection.execute("DELETE FROM order_items WHERE order_id = ?", [orderId]);
-  await connection.execute("DELETE FROM order_tracking WHERE order_id = ?", [orderId]);
 
-  // Now, delete the order itself
-  const query = "DELETE FROM orders WHERE id = ?";
-  const [result] = await connection.execute(query, [orderId]);
-  return result.affectedRows > 0;
+const updateOrder = async (orderId, userId, totalPrice, status, addressId) => {
+  const query = 'UPDATE orders SET total_price = ?, status = ?, address_id = ? WHERE id = ? AND user_id = ?';
+  const [result] = await db.execute(query, [totalPrice, status, addressId, orderId, userId]);
+  return result.affectedRows;
 };
 
-module.exports = { createOrder, getOrderById, getOrderItemsByOrderId, updateOrder, deleteOrder };
+const deleteOrder = async (orderId, userId) => {
+  const query = 'DELETE FROM orders WHERE id = ? AND user_id = ?';
+  const [result] = await db.execute(query, [orderId, userId]);
+  return result.affectedRows;
+};
+
+module.exports = { createOrder, getOrdersByUser,getAllOrders, updateOrder, deleteOrder, createOrderItems };

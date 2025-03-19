@@ -1,58 +1,89 @@
-const orderService = require("../services/orderService");
+const orderService = require('../services/orderService');
 
-/**
- * ✅ Create Order
- */
 const createOrder = async (req, res) => {
-  try {
-    const { total_price, products } = req.body;
-    const userId = req.user.id;
+  const { userId, totalPrice, status, addressId, items } = req.body;
+  console.log(req.body);
 
-    if (!total_price || !products || products.length === 0) {
-      return res.status(400).json({ message: "Total price and products are required" });
+  // Validate required fields
+  if (!userId || !totalPrice || !status || !addressId || !items || !items.length) {
+    return res.status(400).json({ message: 'Required fields: userId, totalPrice, status, addressId, and items' });
+  }
+
+  // Validate status (convert first letter to uppercase)
+  const allowedStatuses = ['Pending', 'Processing','confirmed', 'Shipped', 'Delivered', 'Cancelled', 'Returned'];
+  const formattedStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+  if (!allowedStatuses.includes(formattedStatus)) {
+    return res.status(400).json({ message: 'Invalid order status.' });
+  }
+
+  try {
+    const orderId = await orderService.createOrder(userId, totalPrice, formattedStatus, addressId, items);
+    res.status(201).json({ message: 'Order created successfully', orderId });
+  } catch (error) {
+    console.error('Error creating order:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+}
+
+const getOrdersByUser = async (req, res) => {
+  try {
+      const userId = req.params.userId;
+      const orders = await Order.findAll({ where: { user_id: userId } });
+
+      res.status(200).json({ success: true, orders });
+  } catch (error) {
+      res.status(500).json({ success: false, message: "Error fetching orders", error });
+  }
+};
+
+
+
+const updateOrder = async (req, res) => {
+  const { orderId, userId, totalPrice, status, addressId } = req.body;
+
+  if (!orderId || !userId || !totalPrice || !status || !addressId) {
+    return res.status(400).json({ message: 'All fields are required (orderId, userId, totalPrice, status, addressId)' });
+  }
+
+  try {
+    const updatedRows = await orderService.updateOrder(orderId, userId, totalPrice, status, addressId);
+    if (updatedRows === 0) {
+      return res.status(404).json({ message: 'Order not found or unauthorized' });
     }
-
-    const orderId = await orderService.createOrder(userId, total_price, products);
-
-    res.status(201).json({ message: "Order created successfully", orderId });
+    res.status(200).json({ message: 'Order updated successfully' });
   } catch (error) {
-    console.error("Error creating order:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error('Error updating order:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-/**
- * ✅ Add Tracking Update
- */
-const addTrackingUpdate = async (req, res) => {
+const deleteOrder = async (req, res) => {
+  const { orderId, userId } = req.body;
+
+  if (!orderId || !userId) {
+    return res.status(400).json({ message: 'orderId and userId are required' });
+  }
+
   try {
-    const { status, notes } = req.body;
-    const { id: orderId } = req.params;
-
-    await orderService.addTrackingUpdate(orderId, status, notes);
-
-    res.status(200).json({ message: "Tracking updated successfully" });
+    const deletedRows = await orderService.deleteOrder(orderId, userId);
+    if (deletedRows === 0) {
+      return res.status(404).json({ message: 'Order not found or unauthorized' });
+    }
+    res.status(200).json({ message: 'Order deleted successfully' });
   } catch (error) {
-    console.error("Error adding tracking update:", error);
-    res.status(500).json({ message: "Error adding tracking update", error: error.message });
+    console.error('Error deleting order:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-/**
- * ✅ Get Order Tracking
- */
-const getOrderTracking = async (req, res) => {
+const getAllOrders=async (req, res) => {
   try {
-    const { id: orderId } = req.params;
-    const tracking = await orderService.getOrderTracking(orderId);
-
-    res.status(200).json(tracking);
+    const orders=await orderService.getAllOrders();
+    res.status(200).json({ success: true, data: orders });
   } catch (error) {
-    console.error("Error fetching order tracking:", error);
-    res.status(500).json({ message: "Error fetching order tracking", error: error.message });
+    console.error("Error fetching orders:", error.message);
+        res.status(500).json({ success: false, message: "Error fetching orders", error: error.message });
   }
-};
+}
 
-
-
-module.exports = { createOrder, addTrackingUpdate, getOrderTracking };
+module.exports = { createOrder, getAllOrders, getOrdersByUser, updateOrder, deleteOrder };

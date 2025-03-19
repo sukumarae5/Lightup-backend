@@ -11,7 +11,8 @@ const addCartItem = async (cartData) => {
 
 /**
  * ✅ Get cart items for a specific user
- * @param {number} userId - User's ID
+ * @param {number} userId - User's IDy
+ * 
  * @returns {Promise<Array>} - List of cart items
  */
 const getCartItemsByUser = async (userId) => {

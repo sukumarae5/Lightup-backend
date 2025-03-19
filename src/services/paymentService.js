@@ -1,24 +1,41 @@
-const paymentModel = require("../models/Payment");
+const Payment = require("../models/payment");
 
-const addPayment = async (paymentData) => {
-  return await paymentModel.createPayment(paymentData);
+// ✅ Create Payment
+const createPayment = async (user_id, amount, payment_status, payment_method, transaction_id) => {
+  return await Payment.createPayment(user_id, amount, payment_status, payment_method, transaction_id);
 };
 
-const fetchAllPayments = async () => {
-  return await paymentModel.getAllPayments();
+// ✅ Get All Payments
+const getAllPayments = async () => {
+  return await Payment.getAllPayments();
 };
 
-const fetchPaymentById = async (paymentId) => {
-  return await paymentModel.getPaymentById(paymentId);
+// ✅ Get Payment by ID
+const getPaymentById = async (id) => {
+  return await Payment.getPaymentById(id);
 };
 
-const removePayment = async (paymentId) => {
-  return await paymentModel.deletePayment(paymentId);
+const getLatestPayment = async (user_id) => {
+  return await Payment.getLatestPayment(user_id);
+};
+
+
+
+// ✅ Update Payment
+const updatePayment = async (id, amount, payment_status, payment_method) => {
+  return await Payment.updatePayment(id, amount, payment_status, payment_method);
+};
+
+// ✅ Delete Payment
+const deletePayment = async (id) => {
+  return await Payment.deletePayment(id);
 };
 
 module.exports = {
-  addPayment,
-  fetchAllPayments,
-  fetchPaymentById,
-  removePayment,
+  createPayment,
+  getAllPayments,
+  getPaymentById,
+  updatePayment,
+  getLatestPayment,
+  deletePayment
 };

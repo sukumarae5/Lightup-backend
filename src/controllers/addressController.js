@@ -75,14 +75,15 @@ exports.updateAddress = async (req, res) => {
   console.log("Received data for update:", req.body); // Debug log
 
   // Get the address ID from the URL parameters
-  const id = req.params.addressId;
   // Destructure the other fields from the request body
   const { full_name, phone_number, address, city, state, postalcode, country } = req.body;
   // Get the user ID from the authenticated request (set by your auth middleware)
   const user_id = req.user?.id;
+  const id = req.params.id;
 
   console.log("User ID:", user_id);
   console.log("Address ID:", id);
+ 
 
   // Validate required fields
   if (!id || !user_id) {
@@ -102,7 +103,6 @@ exports.updateAddress = async (req, res) => {
 
   try {
     const result = await addressService.modifyAddress(id, updatedAddressData, user_id);
-
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: "Address not found or no changes made" });
     }

@@ -10,6 +10,8 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const paymentRoutes = require("./routes/paymentRoutes");
 const addressRoutes=require("./routes/addressRoutes")
+const invoiceRoutes=require("./routes/invoice")
+
 const path = require('path'); // Add this line to require the 'path' module
 
 
@@ -36,14 +38,16 @@ app.use('/api/products', productRoutes)
 app.use('/api/orders', orderRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/cart', cartRoutes);
-app.use("/api/payments", paymentRoutes);
+app.use("/api/payment", paymentRoutes);
 app.use('/api/address', addressRoutes)
+app.use('/api', invoiceRoutes); // Registering the route
 
 
 
-const PORT = process.env.PORT || 3000;
+
+const PORT = process.env.PORT || 8081;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log('Server is running on port 3000 http://localhost:${PORT}');
+  console.log('Server is running on port 8081 http://localhost:${PORT}');
 });
 
 
